@@ -1,0 +1,1 @@
+export 'pages/movies/home_page.dart';
