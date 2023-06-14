@@ -1,1 +1,1 @@
-export 'pages/movies/home_page.dart';
+export 'pages/home/home_page.dart';
