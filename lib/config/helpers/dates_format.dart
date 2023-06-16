@@ -2,14 +2,17 @@ import 'package:intl/intl.dart';
 
 class DatesFormats{
 
-  static String number(double number){
+  static String number(double number, [int decimals = 0]){
 
     final formaterNumber = NumberFormat.compactCurrency(
-      decimalDigits: 0,
+      decimalDigits: decimals,
       symbol: '',
       locale: 'en'
     ).format(number);
 
     return formaterNumber;
   }
+
+
+
 }

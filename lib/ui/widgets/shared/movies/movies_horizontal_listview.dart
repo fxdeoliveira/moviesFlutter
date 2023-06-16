@@ -1,5 +1,6 @@
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../config/helpers/dates_format.dart';
 import '../../../../domain/entities/movie.dart';
@@ -23,16 +24,15 @@ class HorizontalListView extends StatefulWidget {
 }
 
 class _HorizontalListViewState extends State<HorizontalListView> {
-
   final scrollController = ScrollController();
 
   @override
   void initState() {
-    
     super.initState();
     scrollController.addListener(() {
-      if(widget.loadNextPage == null) return;
-      if( (scrollController.position.pixels + 200) >= scrollController.position.maxScrollExtent ){
+      if (widget.loadNextPage == null) return;
+      if ((scrollController.position.pixels + 200) >=
+          scrollController.position.maxScrollExtent) {
         widget.loadNextPage!();
       }
     });
@@ -43,6 +43,7 @@ class _HorizontalListViewState extends State<HorizontalListView> {
     scrollController.dispose();
     super.dispose();
   }
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -55,12 +56,13 @@ class _HorizontalListViewState extends State<HorizontalListView> {
           ),
         Expanded(
             child: ListView.builder(
-              controller: scrollController,
+                controller: scrollController,
                 itemCount: widget.movies.length,
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
                 itemBuilder: (context, index) {
-                  return _Slide(movie: widget.movies[index]);
+                  return FadeInRight(
+                      child: _Slide(movie: widget.movies[index]));
                 }))
       ]),
     );
@@ -95,7 +97,10 @@ class _Slide extends StatelessWidget {
                     strokeWidth: 2,
                   ));
                 }
-                return FadeIn(child: child);
+                return GestureDetector(
+                    onTap: () => context.push('/movie/${movie.id}'),
+                    child: FadeIn(child: child)
+                    );
               },
             ),
           ),
@@ -124,11 +129,12 @@ class _Slide extends StatelessWidget {
               ),
               Text(
                 '${movie.voteAverage}',
-                style:
-                    textStyle.bodyMedium?.copyWith(color: Colors.yellow.shade800),
+                style: textStyle.bodyMedium
+                    ?.copyWith(color: Colors.yellow.shade800),
               ),
-             const Spacer(),
-              Text(DatesFormats.number(movie.popularity),  style: textStyle.bodyLarge),
+              const Spacer(),
+              Text(DatesFormats.number(movie.popularity),
+                  style: textStyle.bodyLarge),
             ],
           ),
         )
