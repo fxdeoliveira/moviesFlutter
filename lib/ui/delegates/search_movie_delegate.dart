@@ -10,39 +10,57 @@ typedef SearchMovieCallBack = Future<List<Movie>> Function(String query);
 
 class SearchMovieDelegate extends SearchDelegate<Movie?> {
   final SearchMovieCallBack searchMovie;
+  List<Movie> initialMovies;
 
   StreamController<List<Movie>> debounceMovies = StreamController.broadcast();
+  StreamController<bool> isloadingStream = StreamController.broadcast();
   Timer? _debounceTimer;
 
   void clearStreams() {
     debounceMovies.close();
   }
 
+  void clearLoadingStreams() {
+    isloadingStream.close();
+  }
+
   void _onQuerySearch(String query) {
+    isloadingStream.add(true);
     if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
 
     _debounceTimer = Timer(const Duration(milliseconds: 900), () async {
-      if (query.isEmpty) {
-        debounceMovies.add([]);
-        return;
-      }
-
       final movies = await searchMovie(query);
+      initialMovies = movies;
       debounceMovies.add(movies);
+      isloadingStream.add(false);
     });
   }
 
-  SearchMovieDelegate({required this.searchMovie});
-  @override
-  String get searchFieldLabel => 'Buscar película';
+  SearchMovieDelegate(
+      {required this.searchMovie, this.initialMovies = const []})
+      : super(searchFieldLabel: 'Buscar Películas');
 
   @override
   List<Widget>? buildActions(BuildContext context) {
     return [
-      FadeIn(
-          animate: query.isNotEmpty,
-          child: IconButton(
-              onPressed: () => query = '', icon: const Icon(Icons.clear)))
+      StreamBuilder(
+        initialData: false,
+        stream: isloadingStream.stream,
+        builder: (context, snapShot) {
+          if (snapShot.data ?? false) {
+            return SpinPerfect(
+                duration: const Duration(seconds: 20),
+                spins: 10,
+                child: IconButton(
+                    onPressed: () => query = '',
+                    icon: const Icon(Icons.refresh_rounded)));
+          }
+          return FadeIn(
+              animate: query.isNotEmpty,
+              child: IconButton(
+                  onPressed: () => query = '', icon: const Icon(Icons.clear)));
+        },
+      ),
     ];
   }
 
@@ -58,14 +76,18 @@ class SearchMovieDelegate extends SearchDelegate<Movie?> {
 
   @override
   Widget buildResults(BuildContext context) {
-    return const Text('buildResults');
+    return _buildResultAndSuggestions();
   }
 
   @override
   Widget buildSuggestions(BuildContext context) {
     _onQuerySearch(query);
+    return _buildResultAndSuggestions();
+  }
 
+  Widget _buildResultAndSuggestions() {
     return StreamBuilder(
+        initialData: initialMovies,
         stream: debounceMovies.stream,
         builder: ((context, snapshot) {
           final movies = snapshot.data ?? [];
