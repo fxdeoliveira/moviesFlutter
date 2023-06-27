@@ -47,16 +47,16 @@ class HomeViewState extends ConsumerState<HomeView> {
                   MoviesSlideShow(movies: slideshowMovies),
                   HorizontalListView(
                     movies: nowPlayingMovies,
+                    title: 'En cines',
                     subtitle: 'Disponible',
-                    title: 'Miercoles 14',
                     loadNextPage: () {
                       ref.read(nowPlayngMoviesProvider.notifier).loadNextPage();
                     },
                   ),
                   HorizontalListView(
                     movies: upcomingMovies,
+                    title: 'Proximamente',
                     subtitle: 'Proximamente',
-                    title: 'Este mes',
                     loadNextPage: () {
                       ref.read(upComing.notifier).loadNextPage();
                     },

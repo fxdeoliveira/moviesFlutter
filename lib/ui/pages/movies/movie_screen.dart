@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/entities/movie.dart';
 import '../../providers/index.dart';
 import '../widgets/actor_list_widget.dart';
+import '../widgets/custom_gradient.dart';
 
 class MovieScreen extends ConsumerStatefulWidget {
   static const name = 'movie-screen';
@@ -59,7 +60,7 @@ class _MovieDetails extends StatelessWidget {
     final size = MediaQuery.of(context).size;
     final textStyle = Theme.of(context).textTheme.titleLarge;
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,      
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Padding(
           padding: const EdgeInsets.all(8),
@@ -75,17 +76,17 @@ class _MovieDetails extends StatelessWidget {
             SizedBox(
               width: (size.width - 40) * 0.7,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(movie.title, style: textStyle),
-                   const SizedBox(
-                  height: 10,
-                ),
-                Text(movie.overview),
-                const SizedBox(
-                  height: 20,
-                )
-              ]),
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(movie.title, style: textStyle),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    Text(movie.overview),
+                    const SizedBox(
+                      height: 20,
+                    )
+                  ]),
             ),
           ]),
         ),
@@ -100,38 +101,65 @@ class _MovieDetails extends StatelessWidget {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20)),
                     ),
-                  )),             
+                  )),
             ],
           ),
         ),
-                const SizedBox(height: 10,),
-        ActorsListView(movieId: movie.id.toString(),),
-        const SizedBox(height: 30,),
-
+        const SizedBox(
+          height: 10,
+        ),
+        ActorsListView(
+          movieId: movie.id.toString(),
+        ),
+        const SizedBox(
+          height: 30,
+        ),
       ],
     );
   }
 }
 
-class _CustomSliveAppBar extends StatelessWidget {
+final isfavoriteProvider = FutureProvider.family.autoDispose((ref, int movieId) {
+  final localStorageRepository = ref.watch(localStorageProvider);
+  return localStorageRepository.isMovieFavourite(movieId);
+});
+
+class _CustomSliveAppBar extends ConsumerWidget {
   final Movie movie;
 
   const _CustomSliveAppBar({required this.movie});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isFavoriteFuture = ref.watch(isfavoriteProvider(movie.id));
+
     final size = MediaQuery.of(context).size;
     return SliverAppBar(
       backgroundColor: Colors.black,
       expandedHeight: size.height * 0.7,
       foregroundColor: Colors.white,
+      actions: [
+        IconButton(
+          onPressed: () async{
+
+           await ref.read(favoriteMoviesProvider.notifier).toggleFavorite(movie);
+
+           ref.invalidate(isfavoriteProvider(movie.id));
+          },
+          icon: isFavoriteFuture.when(
+            loading: () => const CircularProgressIndicator(strokeWidth: 2),
+            data: (isFavorite) => isFavorite
+                ? const Icon(
+                    Icons.favorite_rounded,
+                    color: Colors.red,
+                  )
+                : const Icon(Icons.favorite_border),
+            error: (_, __) => throw UnimplementedError(),
+          ),
+        ),
+      ],
       flexibleSpace: FlexibleSpaceBar(
         titlePadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        // title: Text(
-        //   movie.title,
-        //   style: const TextStyle(fontSize: 20),
-        //   textAlign: TextAlign.start,
-        // ),
         background: Stack(
           children: [
             SizedBox.expand(
@@ -139,20 +167,34 @@ class _CustomSliveAppBar extends StatelessWidget {
                 movie.posterPath,
                 fit: BoxFit.cover,
                 loadingBuilder: (context, child, loadingProgress) {
-                  if(loadingProgress != null ) return const SizedBox();
+                  if (loadingProgress != null) return const SizedBox();
                   return FadeIn(child: child);
                 },
               ),
             ),
-            const SizedBox.expand(
-              child: DecoratedBox(
-                  decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          stops: [0.8, 1.0],
-                          colors: [Colors.transparent, Colors.black87]))),
-            ),
+            const CustomGradient(
+                begin: Alignment.topRight,
+                end: Alignment.bottomLeft,
+                stops: [0.0, 0.2],
+                colors: [Colors.black54, Colors.transparent]),
+            const CustomGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                stops: [
+                  0.8,
+                  1.0
+                ],
+                colors: [
+                  Colors.transparent,
+                  Colors.black54,
+                ]),
+            const CustomGradient(begin: Alignment.topLeft, stops: [
+              0.0,
+              0.2
+            ], colors: [
+              Colors.black87,
+              Colors.transparent,
+            ]),
             const SizedBox.expand(
               child: DecoratedBox(
                   decoration: BoxDecoration(
@@ -163,11 +205,8 @@ class _CustomSliveAppBar extends StatelessWidget {
               ], colors: [
                 Colors.black87,
                 Colors.transparent,
-              ]
-              )
-              )
-              ),
-            )
+              ]))),
+            ),
           ],
         ),
       ),

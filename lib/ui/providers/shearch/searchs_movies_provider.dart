@@ -10,7 +10,7 @@ final searchMoviesProvider =
   final movieRepository = ref.read(movieRepositoryProvider);
 
   return SearchedMoviesNotifier(
-      searchMovies: movieRepository.SearchMovieByName, ref: ref);
+      searchMovies: movieRepository.searchMovieByName, ref: ref);
 });
 
 typedef SearchMoviesCallback = Future<List<Movie>> Function(String query);
